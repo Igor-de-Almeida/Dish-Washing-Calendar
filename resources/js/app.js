@@ -14,12 +14,18 @@ console.log('Passou do import 5');
 window.Pusher = Pusher;
 console.log('Passou do Pusher');
 
-window.Echo = new Echo({
-    broadcaster: 'pusher',
-    key: import.meta.env.VITE_PUSHER_APP_KEY,
-    cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
-    forceTLS: true
-});
+try {
+    window.Echo = new Echo({
+        broadcaster: 'pusher',
+        key: import.meta.env.VITE_PUSHER_APP_KEY,
+        cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
+        forceTLS: true
+    });
+
+    console.log('✅ Echo iniciado');
+} catch (e) {
+    console.error('❌ Echo falhou:', e);
+}
 console.log('Passou do Echo');
 
 console.log('✅ Laravel Echo initialized');
