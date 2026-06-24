@@ -10,7 +10,9 @@ console.log('Passou do import 4');
 import Pusher from 'pusher-js';
 console.log('Passou do import 5');
 
+
 window.Pusher = Pusher;
+console.log('Passou do Pusher');
 
 window.Echo = new Echo({
     broadcaster: 'pusher',
@@ -18,6 +20,7 @@ window.Echo = new Echo({
     cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
     forceTLS: true
 });
+console.log('Passou do Echo');
 
 console.log('✅ Laravel Echo initialized');
 
@@ -27,5 +30,6 @@ window.FullCalendar = {
     dayGridPlugin: dayGridPlugin,
     interactionPlugin: interactionPlugin
 };
+console.log('Passou do FullCalendar');
 
 console.log('✅ FullCalendar modules loaded and attached to window.FullCalendar');
