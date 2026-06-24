@@ -18,13 +18,13 @@ Route::get('/calendar', function () {
     return view('calendar');
 })->name('calendar');
 
-Route::get('/debug', function () {
+/* Route::get('/debug', function () {
     return [
         'secure' => request()->secure(),
         'scheme' => request()->getScheme(),
         'url' => url('/'),
     ];
-});
+}); */
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/calendar', function () {
