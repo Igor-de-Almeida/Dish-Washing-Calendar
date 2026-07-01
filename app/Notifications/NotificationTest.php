@@ -34,7 +34,7 @@ class NotificationTest extends Notification
         return [WebPushChannel::class];
     }
 
-    public function toWebPush(object $notifiable, WebPushNotification $notification): WebPushMessage
+    public function toWebPush(object $notifiable, Notification $notification): WebPushMessage
     {
         \Log::info('toWebPush() executado');
 

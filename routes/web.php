@@ -5,7 +5,8 @@ use App\Models\PushSubscription;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Models\Usuario;
-use App\Notifications\NotificationTest as TestWebPushNotification;
+use App\Notifications\NotificationTest;
+use App\Notifications\TodayIsYourTurn;
 
 Route::view('/', 'welcome');
 
@@ -108,20 +109,39 @@ Route::middleware(['auth'])->group(function () {
         
     });
 
-    // routes/web.php (temporary, remove after debugging)
-    Route::get('/debug-push', function () {
-        $user = auth()->user();
 
-        if (!$user) {
-            return 'NOT AUTHENTICATED';
+Route::get('/debug-push-send', function () {
+    $user = auth()->user();
+
+    if (!$user) {
+        return 'NOT AUTHENTICATED';
+    }
+
+    // Log every stage of the pipeline
+    Event::listen(NotificationSending::class, function ($event) {
+        \Log::info('NotificationSending event fired', [
+                'channel' => $event->channel,
+                'notifiable_id' => $event->notifiable->id ?? null,
+            ]);
+        });
+
+        Event::listen(NotificationSent::class, function ($event) {
+            \Log::info('NotificationSent event fired', ['channel' => $event->channel]);
+        });
+
+        Event::listen(NotificationFailed::class, function ($event) {
+            \Log::error('NotificationFailed event fired', [
+                'channel' => $event->channel,
+                'data' => $event->data,
+            ]);
+        });
+        
+        try {
+            $user->notify(new TodayIsYourTurn(\App\Models\dishSchedules::where('user_id', $user->id)->first()));
+            return 'notify() called without throwing — check laravel.log';
+        } catch (\Throwable $e) {
+            return 'EXCEPTION: ' . $e->getMessage() . "\n" . $e->getTraceAsString();
         }
-
-        return [
-            'id' => $user->id,
-            'class' => get_class($user),
-            'subscriptions_count' => $user->pushSubscriptions()->count(),
-            'subscriptions' => $user->pushSubscriptions()->get(['id','subscribable_type','subscribable_id','endpoint']),
-        ];
     });
 
     Route::post('/api/push/subscribe', [PushSubscriptionController::class, 'store']);

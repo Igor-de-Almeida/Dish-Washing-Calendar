@@ -34,37 +34,31 @@
         </div>
 
         <!-- Scripts -->
-        <!-- start webpushr code -->
         <script>
-        (function(w,d, s, id) {if(typeof(w.webpushr)!=='undefined') return;w.webpushr=w.webpushr||function(){(w.webpushr.q=w.webpushr.q||[]).push(arguments)};var js, fjs = d.getElementsByTagName(s)[0];js = d.createElement(s); js.id = id;js.async=1;js.src = "https://cdn.webpushr.com/app.min.js";fjs.parentNode.appendChild(js);}(window,document, 'script', 'webpushr-jssdk'));webpushr('setup',{'key':'BKlgvTt6LMRJiElIVtdGemVKFTYB2MpmqKliwvSk9E5cSvg1HvXB82JUWrU2Rhkf1AaaUXQKGpcaZ93Jcjmr5Qk' });
+            async function requestNotificationPermission() {
 
-        async function requestNotificationPermission() {
+                if (!('Notification' in window)) {
+                    return;
+                }
 
-            if (!('Notification' in window)) {
-                return;
-            }
+                const permission = await Notification.requestPermission();
 
-            const permission = await Notification.requestPermission();
-
-            if (permission === 'granted') {
-                console.log('✅ Permissão concedida');
-
-    
-            } else {
-                console.log('❌ Permissão negada');
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            if ('Notification' in window &&
-                Notification.permission === 'granted') {
-
-                document.getElementById('enableNotificationsBtn').style.display = 'none';
-            }
-        });
-
+                if (permission === 'granted') {
+                    console.log('✅ Permissão concedida');
 
         
+                } else {
+                    console.log('❌ Permissão negada');
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', () => {
+                if ('Notification' in window &&
+                    Notification.permission === 'granted') {
+
+                    document.getElementById('enableNotificationsBtn').style.display = 'none';
+                }
+            });
         </script>
         <!-- end webpushr code -->
         @stack('scripts')

@@ -46,13 +46,31 @@ if ('serviceWorker' in navigator) {
         try {
 
             const registration = await navigator.serviceWorker.register('/webpushr-sw.js');
+            await navigator.serviceWorker.ready;
+
+            const VAPID_PUBLIC_KEY = 'BI7jeMM3k-ylgmUmC7CWV-CoEFH6nIY3kGCSRk5B7H72ZYdZePsnXiUZgjSCwduAW128Wus_pemEhy_jeS4RVpM';
 
             let subscription = await registration.pushManager.getSubscription();
+
+            if (subscription) {
+                console.log('Existing subscription found:', subscription);
+                // Compare the existing subscription's key with the current one
+                const existingKey = btoa(String.fromCharCode(...new Uint8Array(subscription.options.applicationServerKey)));
+                console.log('Existing key:', existingKey);
+                const currentKey = btoa(String.fromCharCode(...urlBase64ToUint8Array(VAPID_PUBLIC_KEY)));
+                console.log('Current key:', currentKey);
+                if (existingKey !== currentKey) {
+                    // Stale subscription tied to an old key — remove it first
+                    await subscription.unsubscribe();
+                    console.log('Old subscription removed due to key mismatch.');
+                    subscription = null;
+                }
+            }
             
             if (!subscription) {
                 subscription = await registration.pushManager.subscribe({
                     userVisibleOnly: true,
-                    applicationServerKey: urlBase64ToUint8Array('BI7jeMM3k-ylgmUmC7CWV-CoEFH6nIY3kGCSRk5B7H72ZYdZePsnXiUZgjSCwduAW128Wus_pemEhy_jeS4RVpM')
+                    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
                 });    
             }
 

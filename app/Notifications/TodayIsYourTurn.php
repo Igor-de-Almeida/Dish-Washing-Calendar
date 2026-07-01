@@ -20,11 +20,13 @@ class TodayIsYourTurn extends Notification
 
     public function via(object $notifiable): array
     {
+        \Log::info('via() executado');
         return [WebPushChannel::class];
     }
 
-    public function toWebPush(object $notifiable, $notification): WebPushMessage
+    public function toWebPush(object $notifiable, Notification $notification): WebPushMessage
     {
+        \Log::info('toWebPush() executado');
         return (new WebPushMessage)
             ->title('🧼 Hoje é o teu dia!')
             ->body('Lembra-te de lavar a loiça hoje (' . $this->schedule->scheduled_date . ')')

@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class PushSubscription extends Model
 {
     protected $fillable = [
-        'user_id',
         'subscribable_type',
         'subscribable_id',
         'endpoint',
