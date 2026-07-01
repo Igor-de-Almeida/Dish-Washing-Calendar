@@ -44,6 +44,10 @@
 
         <!-- Scripts -->
         <script>
+            document.getElementById('enableNotificationsBtn')?.addEventListener('click', () => {
+                console.log('Notification permission requested');
+                requestNotificationPermission();
+            });
         </script>
         <!-- end webpushr code -->
         @stack('scripts')

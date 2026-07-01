@@ -9,25 +9,25 @@
     "orientation": "portrait-primary",
     "icons": [
         {
-            "src": "image/small-icon.png",
+            "src": "/icons/small-icon.png",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "any"
         },
         {
-            "src": "/image/medium-icon.png",
+            "src": "/icons/medium-icon.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any"
         },
         {
-            "src": "/image/markable-icon.png",
+            "src": "/icons/markable-icon.png",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "maskable"
         },
         {
-            "src": "/image/medium-markable-icon.png",
+            "src": "/icons/medium-markable-icon.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "maskable"

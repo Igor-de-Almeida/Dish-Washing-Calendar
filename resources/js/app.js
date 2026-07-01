@@ -47,6 +47,10 @@ console.log('✅ FullCalendar modules loaded and attached to window.FullCalendar
         }
     });
 
+
+
+    window.requestNotificationPermission = requestNotificationPermission;
+
 async function requestNotificationPermission() {
     if (!('Notification' in window)) {
         return;
@@ -121,7 +125,6 @@ async function requestNotificationPermission() {
             console.error('❌ Erro ao registar Service Worker', error);
 
         }
-        await subscribeToPush();
     } else {
         console.log('❌ Permissão negada');
     }
