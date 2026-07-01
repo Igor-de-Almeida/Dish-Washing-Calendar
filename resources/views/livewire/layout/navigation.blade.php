@@ -31,15 +31,20 @@ new class extends Component
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     <div class="hidden md:flex items-center ml-10 space-x-8">
-                        <a href="{{ route('dashboard') }}" class="text-gray-700 dark:text-gray-300 dark:hover:text-gray-900 font-medium">📉 Dashboard</a>
 
-                        <a href="{{ route('calendar') }}" class="text-gray-700 dark:text-gray-300 dark:hover:text-gray-900 font-medium">📅 Calendário</a>
+                        <a href="{{ route('dashboard') }}" class="text-gray-700 hover:text-gray-900 hover:font-bold dark:text-gray-300 dark:hover:text-gray-900 font-medium">📉 Dashboard</a>
+
+                        <a href="{{ route('calendar') }}" class="text-gray-700 hover:text-gray-900 hover:font-bold dark:text-gray-300 dark:hover:text-gray-900 font-medium">📅 {{ __('app.calendar') }}</a>
 
                         @if (auth()->user()?->tipo === 'admin')
-                            <a href="{{ route('admin.schedule') }}" class="text-gray-700 dark:text-gray-300 dark:hover:text-gray-900 font-medium">⚙️ Gestão de Escala</a>
+                            <a href="{{ route('admin.schedule') }}" class="text-gray-700 hover:text-gray-900 hover:font-bold dark:text-gray-300 dark:hover:text-gray-900 font-medium">⚙️ {{ __('app.manage_schedule') }}</a>
                         @endif
 
                         <livewire:notification-badge/>
+
+                        <a href="{{ route('house.settings') }}" class="text-gray-700 hover:text-gray-900 hover:font-bold dark:text-gray-300 dark:hover:text-gray-900 font-medium">🏡 {{ __('app.house_settings') }}</a>
+
+                      {{-- <livewire:language-switcher/> --}}  
                     </div>
                 </div>
             </div>
@@ -89,23 +94,27 @@ new class extends Component
     <!-- Responsive Navigation Menu -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
+            <x-responsive-nav-link :href="route('house.settings')" :active="request()->routeIs('house.settings')" wire:navigate>
+                🏡 {{ __('app.house_settings') }}
+            </x-responsive-nav-link>
+
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" wire:navigate>
                 {{ __('📉 Dashboard') }}
             </x-responsive-nav-link>
             
             <x-responsive-nav-link :href="route('calendar')" :active="request()->routeIs('calendar')" wire:navigate>
-                {{ __('📅 Calendário') }}
+                📅 {{ __('app.calendar') }}
             </x-responsive-nav-link>
 
 
             @if (auth()->user()?->tipo === 'admin')
                 <x-responsive-nav-link :href="route('admin.schedule')" :active="request()->routeIs('admin.schedule')" wire:navigate>
-                {{ __('⚙️ Gestão de Escala') }}
+                ⚙️ {{ __('app.manage_schedule') }}
             </x-responsive-nav-link>    
             @endif
             
             <x-responsive-nav-link :href="route('swap-requests')" :active="request()->routeIs('swap-requests')" wire:navigate>
-                {{ __('🔄 Pedidos de Troca') }}
+                🔄{{ __('app.swap-requests') }}
             </x-responsive-nav-link>
         </div>
 

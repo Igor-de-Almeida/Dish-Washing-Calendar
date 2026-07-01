@@ -3,42 +3,42 @@
     <!-- Toast Notifications -->
     <div id="toast-container" class="fixed bottom-4 right-4 z-[100] flex flex-col gap-2"></div>
     <div class="p-8 max-w-6xl mx-auto">
-        <h1 class="text-3xl font-bold mb-8">Pedidos de Troca</h1>
+        <h1 class="text-3xl font-bold mb-8">{{ __('app.swap-requests') }}</h1>
 
         <div class="flex gap-4 mb-8 border-b">
-            <button wire:click="$set('tab', 'received')" class="pb-4 px-6 font-medium {{ $tab === 'received' ? 'border-b-4 border-violet-600 text-violet-600' : 'text-gray-500' }}">Recebidos</button>
-            <button wire:click="$set('tab', 'sent')" class="pb-4 px-6 font-medium {{ $tab === 'sent' ? 'border-b-4 border-violet-600 text-violet-600' : 'text-gray-500' }}">Enviados</button>
-            <button wire:click="$set('tab', 'history')" class="pb-4 px-6 font-medium {{ $tab === 'history' ? 'border-b-4 border-violet-600 text-violet-600' : 'text-gray-500' }}">Histórico</button>
+            <button wire:click="$set('tab', 'received')" class="pb-4 px-6 font-medium {{ $tab === 'received' ? 'border-b-4 border-violet-600 text-violet-600' : 'text-gray-500' }}">{{ __('app.received') }}</button>
+            <button wire:click="$set('tab', 'sent')" class="pb-4 px-6 font-medium {{ $tab === 'sent' ? 'border-b-4 border-violet-600 text-violet-600' : 'text-gray-500' }}">{{ __('app.sent') }}</button>
+            <button wire:click="$set('tab', 'history')" class="pb-4 px-6 font-medium {{ $tab === 'history' ? 'border-b-4 border-violet-600 text-violet-600' : 'text-gray-500' }}">{{ __('app.history') }}</button>
         </div>
 
         @if ($tab === 'received')
-            <h2 class="text-xl font-semibold mb-4">Pedidos Recebidos</h2>
+            <h2 class="text-xl font-semibold mb-4">{{ __('app.received_requests') }}</h2>
             @if ($received->isEmpty())
-                <p class="text-gray-500">Nenhum Pedido Recebido.</p>
+                <p class="text-gray-500">{{ __('app.no_receied_request') }}.</p>
             @else
                 @foreach ($received as $req)
                     <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 mb-4 flex justify-between items-center text-gray-800 dark:text-gray-200">
                         <div>
-                            <strong>{{ $req->fromUser->nome }}</strong> quer trocar <strong>{{ $req->fromDishDay->scheduled_date }}</strong> por <strong>{{ $req->toDishDay?->scheduled_date }}</strong>
+                            <strong>{{ $req->fromUser->nome }}</strong> {{ __('app.wants_swap_with') }} <strong>{{ $req->fromDishDay->scheduled_date }}</strong> {{ __('app.for') }} <strong>{{ $req->toDishDay?->scheduled_date }}</strong>
                             @if ($req->notes)
                                 <p class="text-sm text-gray-500 mt-1">{{ $req->notes }}</p>
                             @endif
                         </div>
                         <div class="flex gap-3">
-                            <button wire:click="rejectRequest({{ $req->id }})" class="px-5 py-2.5 text-red-600 hover:bg-red-50 rounded-2xl font-medium">Recusar</button>
-                            <button wire:click="acceptRequest({{ $req->id }})" class="px-5 py-2.5 bg-green-600 text-white rounded-2xl font-medium">Aceitar</button>
+                            <button wire:click="rejectRequest({{ $req->id }})" class="px-5 py-2.5 text-red-600 hover:bg-red-50 rounded-2xl font-medium">{{ __('app.reject') }}</button>
+                            <button wire:click="acceptRequest({{ $req->id }})" class="px-5 py-2.5 bg-green-600 text-white rounded-2xl font-medium">{{ __('app.accept') }}</button>
                         </div>
                     </div>
                 @endforeach
             @endif
         @elseif($tab === 'sent')
-            <h2 class="text-xl font-semibold mb-4">Meus Pedidos Enviados</h2>
+            <h2 class="text-xl font-semibold mb-4">{{ __('app.my_sent_requests') }}</h2>
             @if ($sent->isEmpty())
-                <p class="text-gray-500">Nenhum pedido enviado.</p>
+                <p class="text-gray-500">{{ __('app.no_sent_request') }}.</p>
             @else
                 @foreach ($sent as $req)
                     <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 mb-4">
-                        <p>Pedido enviado para <strong>{{ $req->toUser->nome }}</strong></p>
+                        <p>{{ __('app.request_sent_to') }} <strong>{{ $req->toUser->nome }}</strong></p>
                         <p class="text-sm text-gray-500">{{ $req->fromDishDay->scheduled_date }} -- {{ $req->toDishDay?->scheduled_date }}</p>
                         <span class="inline-block mt-2 px-4 py-1 text-xs rounded-full
                             {{ $req->status === 'accepted' ? 'bg-green-100 text-green-700' : ($req->status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700')  }}">
@@ -48,9 +48,9 @@
                 @endforeach
             @endif
         @else
-            <h2 class="text-xl font-semibold mb-4">Histórico de Trocas</h2>
+            <h2 class="text-xl font-semibold mb-4">{{ __('app.swap_history') }}</h2>
              @if ($history->isEmpty())
-                <p class="text-gray-500">Ainda não tens trocas concluídas.</p>
+                <p class="text-gray-500">{{ __('app.no_accepted_requests') }}.</p>
             @else
                 @foreach ($history as $trade)
                     <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 mb-4 shadow flex justify-between items-center">

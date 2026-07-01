@@ -34,7 +34,17 @@ new #[Layout('components.layouts.auth')] class extends Component {
             throw ValidationException::withMessages([
                 'email' => __('auth.failed'),
             ]);
+
+            $user = Auth::user();
+
+            if (!$user->house_id) {
+                return redirect()->route('house.manager');
+            }
+
+            return redirect()->intended(route('calendar'));
         }
+
+        
 
         RateLimiter::clear($this->throttleKey());
         Session::regenerate();

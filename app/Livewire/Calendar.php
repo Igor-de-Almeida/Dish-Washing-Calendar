@@ -2,9 +2,6 @@
 
 namespace App\Livewire;
 
-use App\Http\Requests\AssignDayRequest;
-use App\Http\Requests\MarkAsDoneRequest;
-use App\Http\Requests\SwapRequestForm;
 use Livewire\Component;
 use App\Models\Usuario;
 use App\Models\dishSchedules;
@@ -24,7 +21,7 @@ class Calendar extends Component
 
     public function mount()
     {
-        $this->usuarios = Usuario::all();
+        $this->usuarios = Usuario::where('house_id', Auth::user()->house_id)->get();
         $this->isAdmin = Auth::check() ? Auth::user()->isAdmin() : false;
         $this->loadEvents();
     }
@@ -48,7 +45,7 @@ class Calendar extends Component
     {
         $this->loading = true;
 
-       // $this->validate(MarkAsDoneRequest::class);
+       //$this->validate((new \App\Http\Requests\MarkAsDoneRequest())->rules());
         
         try {
             $dish = dishSchedules::findOrFail($this->photoDayId);
@@ -60,27 +57,27 @@ class Calendar extends Component
                 $dish->update([
                     'status' => 'completed',
                     'photo_path' => $path,
-                    'notes' => 'Marcado como FEITO com foto em '. now()->toDateTimeString()
+                    'notes' => __('app.marked_as_done_with_photo') . ' '. now()->toDateTimeString()
                 ]);
 
                 $this->reset('photo');
                 $this->loadEvents();
                 $this->dispatch('notify', [
                     'type' => 'success',
-                    'message' => 'Dia marcado como FEITO '
+                    'message' => __('app.marked_as_done')
                 ]);
                 $this->dispatch('calendar-refresh');
             } else if ($dish) {
 
                 $dish->update([
                     'status' => 'completed',
-                    'notes' => 'Marcado como feito em ' . now()->toDateTimeString()
+                    'notes' => __('app.marked_as_done_in') .'. '. now()->toDateTimeString()
                 ]);
 
                 $this->loadEvents();
                 $this->dispatch('notify', [
                     'type' => 'success',
-                    'message' => 'Dia marcado como FEITO '
+                    'message' => __('app.marked_as_done')
                 ]);
                 $this->dispatch('calendar-refresh');
             }
@@ -88,7 +85,7 @@ class Calendar extends Component
         } catch (\Exception $e) {
             $this->dispatch('notify', [
                 'type' => 'error',
-                'message' => 'Erro ao marcar como FEITO com foto.'
+                'message' => __('app.error_to_mark_as_done')
             ]);
         } finally {
             $this->loading = false;
@@ -125,16 +122,17 @@ class Calendar extends Component
     public function sendSwapRequest()
     {
         $this->loading = true;
-        //$this->validate(SwapRequestForm::class);
+        //$this->validate((new \App\Http\Requests\SwapRequestForm())->rules());
 
+        if (!$this->selectedSwapDayId || !$this->swapTargetUserId) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => __('app.fill_every_field')
+            ]);
+            return;
+        }
+        
         try {
-            if (!$this->selectedSwapDayId || !$this->swapTargetUserId) {
-                $this->dispatch('notify', [
-                    'type' => 'error',
-                    'message' => 'Preencha todos os campos!'
-                ]);
-                return;
-            }
 
             $day = dishSchedules::findOrFail($this->selectedSwapDayId);
             $targetDay = dishSchedules::findOrFail($this->targetDayId);
@@ -142,7 +140,7 @@ class Calendar extends Component
             if (!$day || $day->user_id !== FacadesAuth::id()) {
                 $this->dispatch('notify', [
                     'type' => 'error',
-                    'message' => 'Só podes pedir troca do teu próprio dia!'
+                    'message' => __('app.only_swap_ur_day')
                 ]);
                 $this->closeSwapModal();
                 $this->closeActionModal();
@@ -150,6 +148,7 @@ class Calendar extends Component
             }
 
             $swapRequest = SwapRequest::create([
+                'house_id' => auth()->user()->house_id,
                 'from_user_id' => FacadesAuth::id(),
                 'to_user_id' => $this->swapTargetUserId,
                 'from_dish_day_id' => $this->selectedSwapDayId,
@@ -162,7 +161,7 @@ class Calendar extends Component
 
             $this->dispatch('notify', [
                 'type' => 'success',
-                'message' => 'Pedido de troca enviado com sucesso!'
+                'message' => __('app.swap_request_success')
             ]);
             $this->closeSwapModal();
             $this->closeActionModal();
@@ -170,7 +169,7 @@ class Calendar extends Component
         } catch (\Exception $e) {
             $this->dispatch('notify', [
                 'type' => 'error',
-                'message' => 'Erro ao Enviar Pedido de troca'
+                'message' => __('app.error_swap_request')
             ]);
         } finally {
             $this->loading = false;    
@@ -202,7 +201,7 @@ class Calendar extends Component
         if (!$this->isAdmin && $event && $event->user_id !== Auth::id()) {
             $this->dispatch('notify', [
                 'type' => 'error',
-                'message' => 'Não tens permissão para alterar este dia!'
+                'message' => __('app.no_permission_to_edit_day')
             ]);
             $this->dispatch('calendar-refresh');
             return;
@@ -221,30 +220,30 @@ class Calendar extends Component
     {
         $this->loading = true;
 
-        try {
-            if (!$this->isAdmin) {
-                $this->dispatch('notify', [
-                    'type' => 'error',
-                    'message' => 'Apenas administradores podem marcar esta opção!'
-                ]);
-                $this->closeActionModal();
-                $this->dispatch('calendar-refresh');
-                return;
-            }
+        if (!$this->isAdmin) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => __('app.only_admin_can_mark')
+            ]);
+            $this->closeActionModal();
+            $this->dispatch('calendar-refresh');
+            return;
+        }
 
+        try {
             if ($this->doneEventId) {
                 $dishSchedule = dishSchedules::findOrFail($this->doneEventId);
 
                 if ($dishSchedule) {
                     $dishSchedule->update([
                         'status' => 'missed',
-                        'notes' => 'Não Lavou a loiça nesta data: ' . now()->toDateTimeString()
+                        'notes' => __('app.missed_dish_date').': ' . now()->toDateTimeString()
                     ]);
 
                     $this->loadEvents();
                     $this->dispatch('notify', [
                         'type' => 'success',
-                        'message' => ' Dia Marcado como NÂO LAVOU'
+                        'message' => __('app.mark_as_missed')
                     ]);
                     $this->dispatch('calendar-refresh');
                 }
@@ -254,7 +253,7 @@ class Calendar extends Component
         } catch (\Exception $e) {
             $this->dispatch('notify', [
                 'type' => 'error',
-                'message' => 'Erro ao marcar dia como MISSED'
+                'message' => __('app.error_marked_as_missed')
             ]);
         } finally {
             $this->loading = false;
@@ -266,29 +265,29 @@ class Calendar extends Component
     {
         $this->loading = true;
 
-        try {
-            if (!$this->isAdmin) {
-                $this->dispatch('notify', [
-                    'type' => 'error',
-                    'message' => 'Apenas administradores podem redefinir o estado!'
-                ]);
-                $this->closeActionModal();
-                $this->dispatch('calendar-refresh');
-                return;
-            }
+        if (!$this->isAdmin) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => __('app.only_admin_can_redo')
+            ]);
+            $this->closeActionModal();
+            $this->dispatch('calendar-refresh');
+            return;
+        }
 
+        try {
             if ($this->doneEventId) {
                 $dishSchedule = dishSchedules::findOrFail($this->doneEventId);
                 if ($dishSchedule) {
                     $dishSchedule->update([
                         'status' => 'pending',
-                        'notes' => 'Marcado como pendente em '. now()->toDateString()
+                        'notes' => __('app.marked_as_pending') .' '. now()->toDateString()
                     ]);
 
                     $this->loadEvents();
                     $this->dispatch('notify', [
                         'type' => 'success',
-                        'message' => ' Dia REDEFINIDO com sucesso!'
+                        'message' => __('app.marked_as_redefined')
                     ]);
                     $this->dispatch('calendar-refresh');
                 }
@@ -298,7 +297,7 @@ class Calendar extends Component
         } catch (\Exception $e) {
             $this->dispatch('notify', [
                 'type' => 'error',
-                'message' => 'Erro ao marcar dia como REDEFINIDO'
+                'message' => __('app.error_marked_as_redefined')
             ]);
         } finally {
             $this->loading = false;
@@ -345,53 +344,51 @@ class Calendar extends Component
     {
         $this->loading = true;
 
+        if (!$this->isAdmin) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => __('app.only_admin_can_act')
+            ]);
+            $this->closeActionModal();
+            $this->closeModal();
+            $this->dispatch('calendar-refresh');
+            return;
+        }
+
         try {
-            //$this->validate(AssignDayRequest::class);
-
-            if (!$this->isAdmin) {
-                $this->dispatch('notify', [
-                    'type' => 'error',
-                    'message' => 'Apenas administradores podem realizar esta acção!'
-                ]);
-                $this->closeActionModal();
-                $this->closeModal();
-                $this->dispatch('calendar-refresh');
-                return;
-            }
-
-            $event = dishSchedules::with('usuario')->find($this->selectedUserId);
-
             $this->validate([
                 'selectedUserId' => 'required|exists:usuarios,id',
                 'selectedDate' => 'required|date',
             ]);
 
+
             if ($this->selectedDate && $this->selectedUserId)
-                {
-                    dishSchedules::updateOrCreate
-                    (
-                        ['scheduled_date' => $this->selectedDate],
-                        ['user_id' => $this->selectedUserId, 'status' => 'pending']
-                    );
+            {
+                dishSchedules::updateOrCreate
+                (
+                    ['scheduled_date' => $this->selectedDate,
+                    'house_id' => auth()->user()->house_id],
 
-                    $this->loadEvents();
+                    ['user_id' => $this->selectedUserId, 
+                    'status' => 'pending', ],
+                );
 
-                    if ($event) {
-                        //session()->flash('success', '✅ Data Atribuída ao usuario: '. $event->usuario->nome ?? 'Desconhecido');
-                        $this->dispatch('notify', [
-                            'type' => 'success',
-                            'message' => ' Data Atribuída ao usuario: '. $event->usuario->nome ?? 'Desconhecido'
-                        ]);
-                    }
+                $user = Usuario::find($this->selectedUserId);
 
-                    $this->dispatch('calendar-refresh' , events: $this->events);
-                }
+                $this->dispatch('notify', [
+                    'type' => 'success',
+                    'message' => __('app.date_assigned_to_user') . ': ' . $user->nome ?? __('app.unknown')
+                ]);
+                $this->loadEvents();
+                $this->dispatch('calendar-refresh' , events: $this->events);
+            }
 
-                $this->closeModal();
+            $this->closeModal();        
+            
         } catch (\Exception $e) {
             $this->dispatch('notify', [
                 'type' => 'error',
-                'message' => 'Erro ao atribuir dia'
+                'message' => __('app.error_assign_day')
             ]);
         } finally {
             $this->loading = false;
@@ -401,10 +398,10 @@ class Calendar extends Component
 
     public function loadEvents()
     {
-        $dishSchedules = dishSchedules::with('usuario')->get();
+        //dd(dishSchedules::with('usuario')->where('house_id', auth()->user()->house_id)->get());
+        $dishSchedules = dishSchedules::with('usuario')->where('house_id', auth()->user()->house_id)->get();
 
         
-
         events: $this->events = $dishSchedules->map(function ($day) {
             $pendingSwaps = SwapRequest::where('status', 'pending')->pluck('from_dish_day_id')->unique();
 
@@ -428,7 +425,7 @@ class Calendar extends Component
 
             return [
                 'id' => $day->id,
-                'title' => ($hasPhoto ? $isCompletedWithPhoto : $icon) . ' ' . ($day->usuario->nome ?? 'Desconhecido') . $shiftLabel,
+                'title' => ($hasPhoto ? $isCompletedWithPhoto : $icon) . ' ' . ($day->usuario->nome ?? '{{__(\'app.unknown\')}}') . $shiftLabel,
                 'start' => $day->scheduled_date,
                 'allDay' => true,
 
@@ -476,7 +473,7 @@ class Calendar extends Component
         $this->dispatch('calendar-refresh');
         $this->dispatch('notify', [
             'type' => 'success',
-            'message' => ' Evento Criado Com Sucesso!'
+            'message' => __('app.event_created')
         ]);
     }
 

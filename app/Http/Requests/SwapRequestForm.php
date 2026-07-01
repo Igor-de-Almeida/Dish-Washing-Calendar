@@ -35,6 +35,7 @@ class SwapRequestForm extends FormRequest
     public function messages()
     {
         return [
+            'from_user_id.required' => 'Selecione o remetente',
             'from_dish_day_id.required' => 'Dia de origem não encontrado.',
             'to_user_id.required' => 'Selecione com quem quer trocar.',
             'to_user_id.different' => 'Não podes trocar contigo mesma(o).',

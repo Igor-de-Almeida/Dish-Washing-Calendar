@@ -17,6 +17,14 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
         ]);
 
+        $middleware->alias([
+            'has.house' =>  \App\Http\Middleware\HasHouse::class
+        ]);
+
+        $middleware->web(append: [
+            \App\Http\Middleware\setLocale::class
+        ]);
+
         $middleware->trustProxies(
             at: '*',
             headers: Request::HEADER_X_FORWARDED_FOR

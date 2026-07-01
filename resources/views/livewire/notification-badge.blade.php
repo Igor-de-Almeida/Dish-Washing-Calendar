@@ -1,4 +1,4 @@
-<a href="{{ route('swap-requests') }}" wire:poll.5s="loadNotifications" class="text-gray-700 dark:text-gray-300 dark:hover:text-gray-900 font-medium">🔄 Pedidos de Troca
+<a href="{{ route('swap-requests') }}" wire:poll.5s="loadNotifications" class="text-gray-700 hover:text-gray-900 hover:font-bold dark:text-gray-300 dark:hover:text-gray-900 font-medium">🔄 {{ __('app.swap-requests') }}
 
     @if ($count > 0)
         <span class="absolute -top-1 -rigth-1 bg-red-500 text-white text-xs font-bold min-w-[20px] w-5 h-5 flex items-center justify-center rounded-full shadow" style="top: 0.40rem">{{ $count > 9 ? '9+' : $count }}</span>

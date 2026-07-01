@@ -12,7 +12,8 @@ class SwapRequest extends Model
         'from_dish_day_id', 
         'to_dish_day_id', 
         'status', 
-        'notes'
+        'notes',
+        'house_id'
     ];
 
     protected $casts = [
@@ -49,5 +50,10 @@ class SwapRequest extends Model
     public function toDishDay()
     {
         return $this->belongsTo(dishSchedules::class, 'to_dish_day_id');
+    }
+
+    public function House() 
+    {
+        return $this->belongsTo(House::class);
     }
 }

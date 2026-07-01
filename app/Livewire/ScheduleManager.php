@@ -21,7 +21,7 @@ class ScheduleManager extends Component
     public $startMonth;
 
     public function mount() { 
-        $this->usuarios = Usuario::all();
+        $this->usuarios = Usuario::where('house_id', auth()->user()->house_id)->get();
         $this->isAdmin = Auth::check() ? Auth::user()->isAdmin() : false;
         $this->startMonth = now()->format('Y-m');
         $this->selectedUsers = collect($this->usuarios)->pluck('id')->toArray();
@@ -29,76 +29,55 @@ class ScheduleManager extends Component
 
     public function generateSchedule() 
     {
-        //$this->validate(GenerateScheduleRequest::class);
-
+        //$this->validate((new \App\Http\Requests\GenerateScheduleRequest())->rules());
+        
         if (!$this->isAdmin) {
-            $this->dispatch('notify', [
-                'type' => 'error',
-                'message' => 'Apenas administradores podem gerar escalas!'
-            ]);
-            return;
-        }
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => __('app.only_admin_can_generate')
+                ]);
+                return;
+            }
 
-        if (empty($this->selectedUsers)) {
-            $this->dispatch('notify', [
-                'type' => 'error',
-                'message' => 'Selecione pelo menos um usuário para a escala.'
-            ]);
-        }
+            if (empty($this->selectedUsers)) {
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => __('app.select_at_least_user')
+                ]);
+            }
 
-        $startDate = Carbon::parse($this->startMonth . '-01');
-        $endDate = $startDate->copy()->endOfMonth();
+            
+        try {
 
-        $users = Usuario::whereIn('id', $this->selectedUsers)->get()->shuffle();
+            $startDate = Carbon::parse($this->startMonth . '-01');
+            $endDate = $startDate->copy()->endOfMonth();
 
-        if ($users->isEmpty()) {
-            //session()->flash('error', 'Nenhum usuário encontrado.');
-            $this->dispatch('notify', [
-                'type' => 'error',
-                'message' => 'Nenhum Usuário Encontrado'
-            ]);
-            return;
-        }
+            $users = Usuario::whereIn('id', $this->selectedUsers)->where('house_id', Auth::user()->house_id)->get()->shuffle();
 
-        $userCount = $users->count();
+            if ($users->isEmpty()) {
+                
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => __('app.no_user_found')
+                ]);
+                return;
+            }
 
-        DB::transaction(function () use ($startDate, $endDate, $users, $userCount) {
+            $userCount = $users->count();
 
-            $currentDate = $startDate->copy();
-            $currentUserIndex = 0;
+            DB::transaction(function () use ($startDate, $endDate, $users, $userCount) {
 
-            $userTarde = null;
-            $userNoite = null;
+                $currentDate = $startDate->copy();
+                $currentUserIndex = 0;
 
-            while ($currentDate <= $endDate) {
-                $dayOfWeek = $currentDate->dayOfWeek();
+                $userTarde = null;
+                $userNoite = null;
 
-                // Sabado Tarde
-                if ($dayOfWeek === 6) {
-                    $userTarde = $users[$currentUserIndex % $userCount];
+                while ($currentDate <= $endDate) {
+                    $dayOfWeek = $currentDate->dayOfWeek();
 
-                    dishSchedules::create([
-                        'user_id' => $userTarde->id,
-                        'scheduled_date' => $currentDate->format('Y-m-d'),
-                        'shift' => 'tarde',
-                        'status' => 'pending',
-                        'notes' => 'Sábado á tarde'
-                    ]);
-
-                    $currentUserIndex++;
-                    $userNoite = $users[$currentUserIndex % $userCount];
-
-                    // Sabado Noite
-                    dishSchedules::create([
-                        'user_id' => $userNoite->id,
-                        'scheduled_date' => $currentDate->format('Y-m-d'),
-                        'shift' => 'noite',
-                        'status' => 'pending',
-                        'notes' => 'Sábado á noite'
-                    ]);
-                } elseif ($dayOfWeek === 0) {
-
-                    if (!$userTarde || !$userNoite) {
+                    // Sabado Tarde
+                    if ($dayOfWeek === 6) {
                         $userTarde = $users[$currentUserIndex % $userCount];
 
                         dishSchedules::create([
@@ -106,98 +85,134 @@ class ScheduleManager extends Component
                             'scheduled_date' => $currentDate->format('Y-m-d'),
                             'shift' => 'tarde',
                             'status' => 'pending',
-                            'notes' => 'Domingo á tarde'
+                            'notes' => __('app.saturday_afternoon')
                         ]);
 
                         $currentUserIndex++;
-
                         $userNoite = $users[$currentUserIndex % $userCount];
 
+                        // Sabado Noite
                         dishSchedules::create([
                             'user_id' => $userNoite->id,
-                            'scheduled_date' => $currentDate->format('Y-m-d'),
-                            'shift' => 'tarde',
-                            'status' => 'pending',
-                            'notes' => 'Domingo á tarde'
-                        ]);
-                    } 
-                    else {
-                        // Domingo a tarde
-                        dishSchedules::create([
-                            'user_id' => $userNoite->id,
-                            'scheduled_date' => $currentDate->format('Y-m-d'),
-                            'shift' => 'tarde',
-                            'status' => 'pending',
-                            'notes' => 'Domingo á tarde'
-                        ]);
-
-                        // Domingo a noite
-                        dishSchedules::create([
-                            'user_id' => $userTarde->id,
                             'scheduled_date' => $currentDate->format('Y-m-d'),
                             'shift' => 'noite',
                             'status' => 'pending',
-                            'notes' => 'Domingo á noite'
+                            'notes' => __('app.saturday_night')
                         ]);
+                    } elseif ($dayOfWeek === 0) {
+
+                        if (!$userTarde || !$userNoite) {
+                            $userTarde = $users[$currentUserIndex % $userCount];
+
+                            dishSchedules::create([
+                                'user_id' => $userTarde->id,
+                                'scheduled_date' => $currentDate->format('Y-m-d'),
+                                'shift' => 'tarde',
+                                'status' => 'pending',
+                                'notes' => __('app.sunday_afternoon')
+                            ]);
+
+                            $currentUserIndex++;
+
+                            $userNoite = $users[$currentUserIndex % $userCount];
+
+                            dishSchedules::create([
+                                'user_id' => $userNoite->id,
+                                'scheduled_date' => $currentDate->format('Y-m-d'),
+                                'shift' => 'tarde',
+                                'status' => 'pending',
+                                'notes' => __('app.sunday_afternoon')
+                            ]);
+                        } 
+                        else {
+                            // Domingo a tarde
+                            dishSchedules::create([
+                                'user_id' => $userNoite->id,
+                                'scheduled_date' => $currentDate->format('Y-m-d'),
+                                'shift' => 'tarde',
+                                'status' => 'pending',
+                                'notes' => __('app.sunday_afternoon')
+                            ]);
+
+                            // Domingo a noite
+                            dishSchedules::create([
+                                'user_id' => $userTarde->id,
+                                'scheduled_date' => $currentDate->format('Y-m-d'),
+                                'shift' => 'noite',
+                                'status' => 'pending',
+                                'notes' => __('app.sunday_night')
+                            ]);
+                        }
+                    } 
+                    else {
+
+                        dishSchedules::create([
+                            'user_id' => $users[$currentUserIndex % $userCount]->id,
+                            'scheduled_date' => $currentDate->format('Y-m-d'),
+                            'shift' => 'full',
+                            'status' => 'pending',
+                            'notes' => __('app.auto_generated')
+                        ]);
+                        
+                        $currentUserIndex++;
                     }
-                } 
-                else {
-
-                    dishSchedules::create([
-                        'user_id' => $users[$currentUserIndex % $userCount]->id,
-                        'scheduled_date' => $currentDate->format('Y-m-d'),
-                        'shift' => 'full',
-                        'status' => 'pending',
-                        'notes' => 'Gerado Automaticamente'
-                    ]);
-                    
-                    $currentUserIndex++;
+                    $currentDate->addDay();
                 }
-                $currentDate->addDay();
-            }
-        });
+            });
 
-        //Carbon::setLocale('pt');
-        //session()->flash('success', '✅ Escala automática gerada com sucesso para '. $startDate->translatedFormat('F/Y'). '!');
+            $this->dispatch('notify', [
+                'type' => 'success',
+                'message' => __('app.auto_generated_success') .' '. $startDate->translatedFormat('F/Y'). '!'
+            ]);
 
-        $this->dispatch('notify', [
-            'type' => 'success',
-            'message' => 'Escala automática gerada com sucesso para '. $startDate->translatedFormat('F/Y'). '!'
-        ]);
-
-        return redirect()->route('calendar');
+            return redirect()->route('calendar');
+        } catch (\Exception $e) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => __('app.error_auto_generate')
+            ]);
+        }
     }
 
     public function clearGeneratedSchedule()
     {
-        if (!$this->isAdmin) {
+
+        try {
+            if (!$this->isAdmin) {
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => __('app.only_admin_clear')
+                ]);
+
+                return;
+            }
+
+            $startDate = Carbon::parse($this->startMonth . '-01');
+            $endDate = $startDate->copy()->endOfMonth();
+
+            DB::transaction(function () use ($startDate, $endDate) {
+                SwapRequest::whereHas('fromDishDay', function($q) use ($startDate, $endDate) {
+                    $q->whereBetween('scheduled_date', [$startDate, $endDate]);
+                })->orWhereHas('toDishDay', function($q) use ($startDate, $endDate) {
+                    $q->whereBetween('scheduled_date', [$startDate, $endDate]);
+                })->delete();
+
+                dishSchedules::whereBetween('scheduled_date', [$startDate, $endDate])->delete();
+
+                $this->dispatch('notify', [
+                    'type' => 'success',
+                    'message' => '🗑️ '. __('app.scale_of_month') .' '. $startDate->translatedFormat('F/Y') .' '.__('app.success_clear')
+                ]);
+            });
+
+            return redirect()->route('calendar');
+        } catch (\Exception $e) {
             $this->dispatch('notify', [
                 'type' => 'error',
-                'message' => 'Apenas administradores podem limpar a escala.'
+                'message' => __('app.error_clear_scale')
             ]);
-
-            return;
         }
-
-        $startDate = Carbon::parse($this->startMonth . '-01');
-        $endDate = $startDate->copy()->endOfMonth();
-
-        DB::transaction(function () use ($startDate, $endDate) {
-            SwapRequest::whereHas('fromDishDay', function($q) use ($startDate, $endDate) {
-                $q->whereBetween('scheduled_date', [$startDate, $endDate]);
-            })->orWhereHas('toDishDay', function($q) use ($startDate, $endDate) {
-                $q->whereBetween('scheduled_date', [$startDate, $endDate]);
-            })->delete();
-
-            dishSchedules::whereBetween('scheduled_date', [$startDate, $endDate])->delete();
-
-            $this->dispatch('notify', [
-                'type' => 'success',
-                'message' => '🗑️ Escala do mês '. $startDate->translatedFormat('F/Y') . ' limpa com sucesso!'
-            ]);
-        });
-
-        return redirect()->route('calendar');
+        
 
     }
 
@@ -212,7 +227,7 @@ class ScheduleManager extends Component
         if (!$this->isAdmin) {
             $this->dispatch('notify', [
                 'type' => 'error',
-                'message' => 'Apenas administradores podem exportar a escala.'
+                'message' => __('app.only_admin_export')
             ]);
             return;
         }
@@ -227,7 +242,7 @@ class ScheduleManager extends Component
         return response()->streamDownload(function () use ($pdf) {
             $this->dispatch('notify', [
                 'type' => 'success',
-                'message' => 'Exportando Escala...'
+                'message' => __('app.exporting_scale') .'...'
             ]);
             echo $pdf->output();
         }, 'escala-' . $startDate->format('Y-m') . '.pdf');   

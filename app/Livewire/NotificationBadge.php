@@ -16,7 +16,7 @@ class NotificationBadge extends Component
 
     public function mount() 
     {
-        \App\Models\SwapRequest::where('to_user_id', auth()->id())->where('status', 'pending')->get();;
+        SwapRequest::where('to_user_id', auth()->id())->where('status', 'pending')->get();;
     }
 
     public function loadNotifications()

@@ -26,7 +26,6 @@ try {
 } catch (e) {
     console.error('❌ Echo falhou:', e);
 }
-console.log('Passou do Echo');
 
 console.log('✅ Laravel Echo initialized');
 
@@ -39,3 +38,68 @@ window.FullCalendar = {
 console.log('Passou do FullCalendar');
 
 console.log('✅ FullCalendar modules loaded and attached to window.FullCalendar');
+
+if ('serviceWorker' in navigator) {
+
+    window.addEventListener('load', async () => {
+
+        try {
+
+            const registration = await navigator.serviceWorker.register('/service-worker.js');
+
+            let subscription = await registration.pushManager.getSubscription();
+            
+            if (!subscription) {
+                subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array('BI7jeMM3k-ylgmUmC7CWV-CoEFH6nIY3kGCSRk5B7H72ZYdZePsnXiUZgjSCwduAW128Wus_pemEhy_jeS4RVpM')
+                });    
+            }
+
+            console.log('✅ Service Worker registado!', registration);
+
+
+            
+
+            const json = subscription.toJSON();
+
+            console.log(subscription);
+            console.log(subscription.toJSON());
+
+            // Envia a subscription para o backend
+            await fetch('/api/push/subscribe', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                 },
+                body: JSON.stringify({
+                    endpoint: json.endpoint,
+                    public_key: json.keys.p256dh,
+                    auth_token: json.keys.auth,
+                    content_encoding: 'aes128gcm'
+                })
+            });
+
+            alert('✅ Notificações ativadas com sucesso!');
+
+        } catch (error) {
+
+            console.error('❌ Erro ao registar Service Worker', error);
+
+        }
+
+    });
+
+}
+
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+        .replace(/-/g, '+')
+        .replace(/_/g, '/');
+
+    const rawData = window.atob(base64);
+
+    return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
+}

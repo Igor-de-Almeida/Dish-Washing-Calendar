@@ -13,6 +13,7 @@ class dishSchedules extends Model
     protected $table = 'dish_schedules';
 
     protected $fillable = [
+        'house_id',
         'user_id',
         'scheduled_date',
         'status',
@@ -40,5 +41,10 @@ class dishSchedules extends Model
     public function usuario(): BelongsTo
     {
         return $this->belongsTo(Usuario::class, 'user_id', 'id');
+    }
+
+    public function House() 
+    {
+        return $this->belongsTo(House::class);
     }
 }

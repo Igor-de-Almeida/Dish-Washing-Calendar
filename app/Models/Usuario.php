@@ -5,10 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use NotificationChannels\WebPush\HasPushSubscriptions;
+use Illuminate\Notifications\Notifiable;
 
 class Usuario extends Authenticatable
 {
-    use HasFactory;
+    use HasFactory, Notifiable, HasPushSubscriptions;
 
     protected $table = 'usuarios';
 
@@ -17,7 +19,8 @@ class Usuario extends Authenticatable
         'username',
         'email',
         'password',
-        'tipo'
+        'tipo',
+        'house_id'
     ];
 
     protected $hidden = [
@@ -27,6 +30,10 @@ class Usuario extends Authenticatable
 
     public function isAdmin() {
         return $this->tipo === 'admin';
+    }
+
+    public function isSuperAdmin() {
+        return $this->tipo === 'super_admin';
     }
 
     public function dishSchedules() {
@@ -41,5 +48,10 @@ class Usuario extends Authenticatable
     public function swapRequestsReceived()
     {
         return $this->hasMany(SwapRequest::class, 'to_user_id');
+    }
+
+    public function House()
+    {
+        return $this->belongsTo(House::class);
     }
 }
