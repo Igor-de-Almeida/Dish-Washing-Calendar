@@ -108,21 +108,20 @@ Route::middleware(['auth'])->group(function () {
         
     });
 
-    Route::get('/test-subscriptions', function () {
-        dd(auth()->user()->pushSubscriptions());
-    });
-
-    Route::get('/debug-user', function () {
-
+    // routes/web.php (temporary, remove after debugging)
+    Route::get('/debug-push', function () {
         $user = auth()->user();
 
-        dd(
-            get_class($user),
-            $user->id,
-            $user->pushSubscriptions()->toSql(),
-            $user->pushSubscriptions()->getBindings()
-        );
+        if (!$user) {
+            return 'NOT AUTHENTICATED';
+        }
 
+        return [
+            'id' => $user->id,
+            'class' => get_class($user),
+            'subscriptions_count' => $user->pushSubscriptions()->count(),
+            'subscriptions' => $user->pushSubscriptions()->get(['id','subscribable_type','subscribable_id','endpoint']),
+        ];
     });
 
     Route::post('/api/push/subscribe', [PushSubscriptionController::class, 'store']);
