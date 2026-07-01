@@ -39,10 +39,24 @@ console.log('Passou do FullCalendar');
 
 console.log('✅ FullCalendar modules loaded and attached to window.FullCalendar');
 
-if ('serviceWorker' in navigator) {
 
-    window.addEventListener('load', async () => {
+    document.addEventListener('DOMContentLoaded', () => {
+        if ('Notification' in window &&
+            Notification.permission === 'granted') {
+            document.getElementById('enableNotificationsBtn').style.display = 'none';
+        }
+    });
 
+async function requestNotificationPermission() {
+    if (!('Notification' in window)) {
+        return;
+    }
+
+    const permission = await Notification.requestPermission();
+
+    if (permission === 'granted') {
+        console.log('✅ Permissão concedida');
+        // ... your existing subscribe logic goes here (registration, subscribe, fetch to backend)
         try {
 
             const registration = await navigator.serviceWorker.register('/webpushr-sw.js');
@@ -90,7 +104,7 @@ if ('serviceWorker' in navigator) {
                 headers: { 
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                 },
+                    },
                 body: JSON.stringify({
                     endpoint: json.endpoint,
                     public_key: json.keys.p256dh,
@@ -99,16 +113,51 @@ if ('serviceWorker' in navigator) {
                 })
             });
 
-            alert('✅ Notificações ativadas com sucesso!');
+            //alert('✅ Notificações ativadas com sucesso!');
+            console.log('✅ Notificações ativadas com sucesso!');
 
         } catch (error) {
 
             console.error('❌ Erro ao registar Service Worker', error);
 
         }
+        await subscribeToPush();
+    } else {
+        console.log('❌ Permissão negada');
+    }
 
-    });
+    const { isIOS, isStandalone } = getPlatformInfo();
 
+    // iOS requires the PWA to be installed to Home Screen before push works at all
+    if (isIOS && !isStandalone) {
+        showIOSInstallInstructions();
+        return;
+    }
+
+    // Also worth checking: does this browser support push at all?
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        alert('Este navegador não suporta notificações push.');
+        return;
+    }
+}
+
+function getPlatformInfo() {
+    const ua = navigator.userAgent;
+    const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+        || window.navigator.standalone === true;
+    return { isIOS, isStandalone };
+}
+
+function showIOSInstallInstructions() {
+    // Simple version — swap for a nicer modal/UI component later
+    alert(
+        'Para receber notificações no iPhone:\n\n' +
+        '1. Toque no ícone de Partilhar (□↑) na barra do Safari\n' +
+        '2. Escolha "Adicionar ao Ecrã Principal"\n' +
+        '3. Abra a app a partir do ícone no ecrã principal\n' +
+        '4. Depois toque em "Ativar notificações" novamente'
+    );
 }
 
 function urlBase64ToUint8Array(base64String) {

@@ -5,6 +5,15 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
+        <link rel="manifest" href="/manifest.json">
+        <meta name="theme-color" content="#2563eb">
+
+        <!-- iOS-specific PWA meta tags (Android reads manifest.json fine on its own) -->
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="default">
+        <meta name="apple-mobile-web-app-title" content="DishCal">
+        <link rel="apple-touch-icon" href="/icons/icon-192.png">
+
         <title>{{ config('app.name', 'Laravel') }}</title>
 
         <!-- Fonts -->
@@ -35,30 +44,6 @@
 
         <!-- Scripts -->
         <script>
-            async function requestNotificationPermission() {
-
-                if (!('Notification' in window)) {
-                    return;
-                }
-
-                const permission = await Notification.requestPermission();
-
-                if (permission === 'granted') {
-                    console.log('✅ Permissão concedida');
-
-        
-                } else {
-                    console.log('❌ Permissão negada');
-                }
-            }
-
-            document.addEventListener('DOMContentLoaded', () => {
-                if ('Notification' in window &&
-                    Notification.permission === 'granted') {
-
-                    document.getElementById('enableNotificationsBtn').style.display = 'none';
-                }
-            });
         </script>
         <!-- end webpushr code -->
         @stack('scripts')
