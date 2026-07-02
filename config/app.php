@@ -65,7 +65,7 @@ return [
     |
     */
 
-    'timezone' => 'Africa/Mozambique',
+    'timezone' => 'Africa/Maputo',
 
     /*
     |--------------------------------------------------------------------------
