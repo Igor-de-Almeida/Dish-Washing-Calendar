@@ -78,4 +78,13 @@ Route::middleware(['auth'])->group(function () {
         }
         return view('admin.schedule');
     })->name('admin.schedule');
+
+    Route::get('/health-check', function () {
+    \Log::info('Health check executado');
+
+    return response()->json([
+        'status' => 'ok',
+        'time' => now(),
+    ]);
+});
 });
